@@ -1,0 +1,6 @@
+16/12/2023 - Steven Van Roye
+Create github project
+
+17/12/2023 - Steven Van Roye
+Add environment export from Conda.
+Add dummy page for Streamlit
