@@ -11,6 +11,7 @@ exceptiongroup==1.2.0
 fastapi==0.105.0
 gitdb==4.0.11
 GitPython==3.1.40
+h11==0.14.0
 idna==3.6
 importlib-metadata==6.11.0
 Jinja2==3.1.2
@@ -48,5 +49,6 @@ typing_extensions==4.9.0
 tzdata==2023.3
 tzlocal==5.2
 urllib3==2.1.0
+uvicorn==0.25.0
 validators==0.22.0
 zipp==3.17.0
