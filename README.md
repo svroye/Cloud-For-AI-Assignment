@@ -6,26 +6,58 @@ https://www.kaggle.com/datasets/samuelcortinhas/sports-balls-multiclass-image-cl
 ## Application
 
 ### Local
-- Create Python virtual environment (tested with Python 3.10)
-- Install dependencies
-  ```shell
-    pip install -r requirements.txt
-  ```
-- Run the streamlit app
-  ```shell
-    streamlit run app/home.py
-  ```
 
-### Container
+Create a new python environment (tested with python 3.10) and install dependencies using
 
-- Build a Docker image with tag name e.g. cloud-for-ai
-  ```shell
-    docker build -t cloud-for-ai .
-  ```
+```shell
+pip install -r requirements-local.txt
+```
 
-- Run the Docker image
-  ```shell
-    docker run -p 8501:8501 cloud-for-ai
-  ```
+#### Frontend
+The frontend is built using Streamlit. In order to run it, execute following commands:
 
-- Navigate in your browser to http://localhost:8501
+```shell
+cd <project-root>/app
+streamlit run home.py
+```
+
+Note: change `base_url = "http://localhost:8000"` in main.py.
+
+#### Backend
+The backend is built using Fastapi. In order to run it, execute following commands:
+
+```shell
+cd <project-root>/api
+uvicorn main:app --host api --port 8000
+```
+
+
+### Docker
+
+#### Frontend
+The frontend is built using Streamlit. In order to run it, execute following commands:
+
+```shell
+cd <project-root>/app
+docker build -t <tag-name> .
+docker run -p 8501:8501 <tag-name>
+```
+
+Navigate in your browser to http://localhost:8501.
+
+#### Backend
+The backend is built using Fastapi. In order to run it, execute following commands:
+
+```shell
+cd <project-root>/api
+docker build -t <tag-name> .
+docker run -p 8000:8000 <tag-name>
+```
+
+#### Docker-compose
+Run both front- and backend simultaneously with docker compose:
+
+```shell
+docker-compose build
+docker-compose up
+```
