@@ -48,7 +48,7 @@ def api_call(data):
 
     base_url = "http://localhost:8000"
 
-    response = requests.post(url=f"{base_url}/predictor", data=data)
+    response = requests.post(url=f"{base_url}/predict", data=data)
     if response.status_code == 200:
         return response.json()
     else:
