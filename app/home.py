@@ -1,25 +1,66 @@
-import requests
 import streamlit as st
-import logging
 
-base_url = "http://api:8000"
+def gallery():
+    import streamlit as st
 
-logging.basicConfig(level=logging.INFO)
-
-st.sidebar.title("Welcome!")
-file = st.sidebar.file_uploader("Select a picture", type=['jpg', 'png'])
+    st.markdown(f"# {list(page_names_to_funcs.keys())[0]}")
+    st.write("Images in the gallery")
 
 
-def api_call():
-    response = requests.post(url=f"{base_url}/predict")
+def image_classifier():
+    import streamlit as st
+    import logging
+    from PIL import Image
+    from io import BytesIO
+
+    logging.basicConfig(level=logging.INFO)
+
+    st.markdown(f"# {list(page_names_to_funcs.keys())[1]}")
+    st.write("Within this page, you can upload an image and use the 'predict' function to evaluate what kind of sports ball is in the image.")
+    st.write("Choose an image to upload to the gallery")
+
+    file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed")
+    if file is not None:
+        image_bytes = file.getvalue()
+        data = {"data": image_bytes}
+        image = Image.open(BytesIO(image_bytes))
+        st.image(image)
+
+        if st.button("Predict"):
+            test = api_call(image_bytes)
+            st.write(test)
+            manual = st.selectbox("If the prediction is incorrect, please pick the correct one",
+                                  ["", "American Football", "Baseball", "Basketball", "Billiard Ball", "Bowling Ball",
+                                   "Cricket Ball", "Football", "Golf Ball",
+                                   "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock", "Table Tennis Ball",
+                                   "Tennis Ball", "Volleyball"])
+            label = manual.replace(" ", "_").lower()
+            st.write("You selected:", label)
+    #            if st.button("Save Image"):
+    #                if manual != "":
+    #                    label = manual
+    #                    st.write(label)
+
+    # logging.info(response)
+
+def api_call(data):
+    import requests
+
+    base_url = "http://localhost:8000"
+
+    response = requests.post(url=f"{base_url}/predict", data=data)
     if response.status_code == 200:
         return response.json()
     else:
         return response.text
 
+page_names_to_funcs = {
+    "Gallery": gallery,
+    "Image Classifier": image_classifier
+}
 
-logging.info(file)
-if file:
-    print("file here")
-    response = api_call()
-    logging.info(response)
+st.sidebar.title("Sports Balls Exhibition")
+st.sidebar.write("Within this application, a user can view the gallery of sports balls that are ")
+
+pages = st.sidebar.selectbox("Pages", page_names_to_funcs.keys())
+page_names_to_funcs[pages]()
