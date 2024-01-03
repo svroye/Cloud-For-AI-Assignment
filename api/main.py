@@ -1,26 +1,53 @@
-from fastapi import FastAPI
-from pickle import load
+import uvicorn
+import logging
+from io import BytesIO
 from ultralytics import YOLO
 from PIL import Image
-import numpy as np
+from fastapi import FastAPI, Request, status, UploadFile
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+import streamlit as st
 
 app = FastAPI()
 model = YOLO('./last.pt')
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logging.error(f"{request}: {exc_str}")
+    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+# class Response:
+#     prediction = str
+#     confidence = str
+
+
 @app.post("/predict/")
-def predictor(file):
-    from io import BytesIO
-    # with open("last.pt", "rb") as f:
-    #     model = load(f)
-    # model = YOLO('./api/last.pt')
+def results(f: UploadFile):
+    try:
+        data = f.file.read()
+        image = Image.open(BytesIO(data))
 
-    image = Image.open(BytesIO(file["data"]))
-    result = model.predict(image)
+        predict = model.predict(image)
 
-    names_dict = result[0].names
-    probs = result[0].probs
-    prediction = names_dict[np.argmax(probs.top1)]
-    prediction = prediction.replace("_", " ").title()
-    confidence = probs.top1conf * 100
+        names_dict = predict[0].names
+        probs = predict[0].probs
 
-    return {"prediction": prediction, "confidence": confidence}
+        prediction = names_dict[probs.top1]
+        prediction = prediction.replace("_", " ").title()
+
+        confidence = probs.numpy().top1conf * 100
+
+        result = {"prediction": prediction, "confidence": confidence}
+        return JSONResponse(result)
+    except Exception as e:
+        print(e)
+    except RequestValidationError as vale:
+        print(vale)
+
+
+if __name__ == '__main__':
+    uvicorn.run(app, host="api", port=8000)

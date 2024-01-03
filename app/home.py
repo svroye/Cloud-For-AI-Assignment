@@ -12,6 +12,8 @@ def image_classifier():
     import logging
     from PIL import Image
     from io import BytesIO
+    from ultralytics import YOLO
+    import numpy as np
 
     logging.basicConfig(level=logging.INFO)
 
@@ -20,39 +22,60 @@ def image_classifier():
     st.write("Choose an image to upload to the gallery")
 
     file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed")
+
     if file is not None:
         image_bytes = file.getvalue()
-        data = {"data": image_bytes}
         image = Image.open(BytesIO(image_bytes))
         st.image(image)
+        prediction = ""
+        confidence = ""
 
         if st.button("Predict"):
-            test = api_call(image_bytes)
-            st.write(test)
+            # temp method via streamlit instead of fastapi
+            model = YOLO("./last.pt")
+            result = model.predict(Image.open(BytesIO(image_bytes)))
+            names_dict = result[0].names
+            probs = result[0].probs
+            prediction = names_dict[probs.top1]
+            prediction = prediction.replace("_", " ").title()
+            confidence = probs.numpy().top1conf * 100
+
+        if prediction != "" and confidence != "":
+            st.write("Prediction:", prediction)
+            st.write("Confidence: {:0.2f}%".format(confidence))
+
             manual = st.selectbox("If the prediction is incorrect, please pick the correct one",
-                                  ["", "American Football", "Baseball", "Basketball", "Billiard Ball", "Bowling Ball",
+                                  ["", "American Football", "Baseball", "Basketball", "Billiard Ball",
+                                   "Bowling Ball",
                                    "Cricket Ball", "Football", "Golf Ball",
-                                   "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock", "Table Tennis Ball",
+                                   "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock",
+                                   "Table Tennis Ball",
                                    "Tennis Ball", "Volleyball"])
-            label = manual.replace(" ", "_").lower()
-            st.write("You selected:", label)
-    #            if st.button("Save Image"):
-    #                if manual != "":
-    #                    label = manual
-    #                    st.write(label)
+            st.write("You selected:", manual)
 
-    # logging.info(response)
+            # TBC via fastapi
+            # result = api_call(file)
 
-def api_call(data):
+           # if st.button("Save Image"):
+           #     if manual != "":
+           #         label = manual.replace(" ", "_").lower()
+           #     else:
+           #         label = prediction
+
+           # logging.info(response)
+
+
+def api_call(file):
     import requests
 
-    base_url = "http://localhost:8000"
+    base_url = "http://api:8000"
+    response = requests.post(url=f"{base_url}/predict/", data=file)
 
-    response = requests.post(url=f"{base_url}/predict", data=data)
     if response.status_code == 200:
         return response.json()
     else:
         return response.text
+
 
 page_names_to_funcs = {
     "Gallery": gallery,
