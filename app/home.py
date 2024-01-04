@@ -13,7 +13,6 @@ def image_classifier():
     from PIL import Image
     from io import BytesIO
     from ultralytics import YOLO
-    import numpy as np
 
     logging.basicConfig(level=logging.INFO)
 
