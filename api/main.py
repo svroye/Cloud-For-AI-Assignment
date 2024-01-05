@@ -42,7 +42,7 @@ def results(f: UploadFile):
         confidence = probs.numpy().top1conf * 100
 
         result = {"prediction": prediction, "confidence": confidence}
-        return JSONResponse(result)
+        return result
     except Exception as e:
         print(e)
     except RequestValidationError as vale:

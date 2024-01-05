@@ -39,6 +39,10 @@ def image_classifier():
             prediction = prediction.replace("_", " ").title()
             confidence = probs.numpy().top1conf * 100
 
+            files = {"f": (file.name, file.read(), file.type)}
+            response = api_call(files)
+            st.write(response)
+
         if prediction != "" and confidence != "":
             st.write("Prediction:", prediction)
             st.write("Confidence: {:0.2f}%".format(confidence))
@@ -67,8 +71,8 @@ def image_classifier():
 def api_call(file):
     import requests
 
-    base_url = "http://api:8000"
-    response = requests.post(url=f"{base_url}/predict/", data=file)
+    base_url = "http://localhost:8000"
+    response = requests.post(url=f"{base_url}/predict/", files=file)
 
     if response.status_code == 200:
         return response.json()
