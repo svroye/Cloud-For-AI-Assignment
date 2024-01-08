@@ -22,22 +22,14 @@ def has_session_state(key: SessionStateKey):
     return key.value in st.session_state
 
 
-def setSessionStates():
-    if not has_session_state(SessionStateKey.PREDICT):
-        set_session_state(SessionStateKey.PREDICT, "")
-
-    if not has_session_state(SessionStateKey.SELECT):
-        set_session_state(SessionStateKey.SELECT, None)
-
-
 def deleteSessionStates():
     for key in st.session_state.keys():
         del st.session_state[key]
 
 
 def reset_session_state():
-    set_session_state(SessionStateKey.PREDICT, "")
-    set_session_state(SessionStateKey.SELECT, None)
+    for key in st.session_state.keys():
+        del st.session_state[key]
 
 
 def onClickFunction(img):
@@ -75,8 +67,8 @@ def getManualSelection():
                               "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock",
                               "Table Tennis Ball", "Tennis Ball", "Volleyball"], index= None,
                              placeholder="Do not use in case of a correct prediction",)
-    st.session_state.select = selection
-    return st.session_state.select
+    set_session_state(SessionStateKey.SELECT, selection)
+    return selection
 
 
 def getLabel():
@@ -132,12 +124,10 @@ if file is not None:
     image.thumbnail((256, 256))
     st.image(image)
 
-    setSessionStates()
-
     if st.button("Predict"):
         onClickFunction(image)
 
-    if get_session_state(SessionStateKey.PREDICT) != "":
+    if has_session_state(SessionStateKey.PREDICT):
         read_prediction()
         getManualSelection()
 
