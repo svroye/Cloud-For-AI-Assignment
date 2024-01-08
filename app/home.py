@@ -63,7 +63,8 @@ def getManualSelection():
                               "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock",
                               "Table Tennis Ball", "Tennis Ball", "Volleyball"], index= None,
                              placeholder="Do not use in case of a correct prediction",)
-    set_session_state(SessionStateKey.SELECT, selection)
+    if selection:
+        set_session_state(SessionStateKey.SELECT, selection)
     return selection
 
 
@@ -126,7 +127,7 @@ if file is not None:
         read_prediction()
         getManualSelection()
 
-        if get_session_state(SessionStateKey.SELECT) is not None:
+        if has_session_state(SessionStateKey.SELECT):
             st.write("You have selected:", get_session_state(SessionStateKey.SELECT))
 
         if st.button("Save Image"):
