@@ -1,6 +1,8 @@
 import streamlit as st
 from PIL import Image
 from io import BytesIO
+from model.models import YoloModel, DensenetModel, EnsembleModel
+
 
 
 def setSessionStates():
@@ -23,22 +25,25 @@ def onClickFunction(img):
 
 
 def predictor(img):
-    from ultralytics import YOLO
-
-    model = YOLO("./app/last.pt")
-    predict = model.predict(img)
-    names_dict = predict[0].names
-    probs = predict[0].probs
-    prediction = names_dict[probs.top1]
-    prediction = prediction.replace("_", " ").title()
-    confidence = probs.numpy().top1conf * 100
-    result = {"prediction": prediction, "confidence": confidence}
-    return result
+    models = [
+        YoloModel("./app/model/last.pt"),
+        DensenetModel("./app/model/model.pickle")
+    ]
+    ensemble = EnsembleModel(models)
+    return ensemble.predict(img)
 
 
 def readPrediction():
-    st.write('Prediction:', st.session_state["predict"]["prediction"])
-    st.write('Confidence: {:0.2f}%'.format(st.session_state["predict"]["confidence"]))
+    predictions = st.session_state["predict"]
+
+    preds = "\n".join(pred["prediction"] for pred in predictions)
+    confs = "\n".join("{:0.2f}".format(pred["confidence"]) for pred in predictions)
+
+    st.write('Prediction:', preds)
+    st.write('Confidence:', confs)
+
+
+
 
 
 def getManualSelection():
