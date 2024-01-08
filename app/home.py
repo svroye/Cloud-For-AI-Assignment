@@ -68,7 +68,7 @@ def saveImage(image_bytes, label):
 def api_call(file):
     import requests
 
-    base_url = "http://localhost:8000"
+    base_url = "http://api:8000"
     response = requests.post(url=f"{base_url}/predict/", files=file)
 
     if response.status_code == 200:
