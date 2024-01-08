@@ -1,7 +1,21 @@
 import pickle
 from abc import ABC, abstractmethod
+from typing import List
+
 from ultralytics import YOLO
 import torch
+
+
+class ModelPrediction:
+    def __init__(self, prediction, probability):
+        self.prediction = prediction
+        self.probability = probability
+
+
+class EnsemblePrediction:
+    def __init__(self, unique_result: bool, result: List[ModelPrediction]):
+        self.unique_result = unique_result
+        self.result = result
 
 
 class Model(ABC):
@@ -9,7 +23,7 @@ class Model(ABC):
         self.model = model
 
     @abstractmethod
-    def predict(self, data):
+    def predict(self, data) -> ModelPrediction:
         pass
 
 
@@ -23,9 +37,8 @@ class YoloModel(Model):
         names = predict[0].names
         probs = predict[0].probs
         prediction = names[probs.top1]
-        confidence = probs.numpy().top1conf * 100
-        result = {"prediction": prediction, "confidence": confidence}
-        return result
+        probability = probs.numpy().top1conf * 100
+        return ModelPrediction(prediction, probability)
 
 
 class DensenetModel(Model):
@@ -44,24 +57,26 @@ class DensenetModel(Model):
 
         probs = torch.nn.functional.softmax(model(data_tf), dim=1)
         prediction_idx = torch.argmax(probs, dim=1).item()
-        prediction_label = self.model["labels"][prediction_idx]
-        predicted_probability = probs[0, prediction_idx].item()
+        prediction = self.model["labels"][prediction_idx]
+        probability = probs[0, prediction_idx].item() * 100
 
-        return {"prediction": prediction_label, "confidence": predicted_probability}
+        return ModelPrediction(prediction, probability)
 
 
 class EnsembleModel:
-    def __init__(self, models):
+    def __init__(self, models: List[Model]):
         self.models = models
 
     def predict(self, data):
         predictions = [model.predict(data) for model in self.models]
-        return predictions
-        # if all(pred["prediction"] == predictions[0]["prediction"] for pred in predictions):
-        #     # If all labels are the same, return a single prediction
-        #     return predictions[0]
-        # else:
-        #     # If labels are different, return an array of predictions
-        #     return predictions
 
+        # Check if all predicted labels are the same
+        if all(pred.prediction == predictions[0].prediction for pred in predictions):
+            avg_probability = sum(pred.probability for pred in predictions) / len(predictions)
+            output = ModelPrediction(prediction=predictions[0].prediction, probability=avg_probability)
+            return EnsemblePrediction(unique_result=True, result=[output])
+        else:
+            # If labels are different, sort the predictions by decreasing order of probability
+            sorted_predictions = sorted(predictions, key=lambda x: x.probability, reverse=True)
+            return EnsemblePrediction(unique_result=False, result=sorted_predictions)
 
