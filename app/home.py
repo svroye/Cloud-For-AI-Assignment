@@ -37,7 +37,7 @@ def deleteSessionStates():
 
 def onClickFunction(img):
     result = predictor(img)
-    st.session_state["predict"] = result
+    set_session_state(SessionStateKey.PREDICT, result)
     return result
 
 
@@ -51,16 +51,13 @@ def predictor(img):
 
 
 def readPrediction():
-    predictions = st.session_state["predict"]
+    predictions = get_session_state(SessionStateKey.PREDICT)
 
     preds = "\n".join(pred["prediction"] for pred in predictions)
     confs = "\n".join("{:0.2f}".format(pred["confidence"]) for pred in predictions)
 
     st.write('Prediction:', preds)
     st.write('Confidence:', confs)
-
-
-
 
 
 def getManualSelection():
@@ -75,11 +72,12 @@ def getManualSelection():
 
 
 def getLabel():
-    if st.session_state["select"] is None:
-        lbl = st.session_state["predict"]
+    if not has_session_state(SessionStateKey.SELECT):
+        lbl = get_session_state(SessionStateKey.PREDICT)
     else:
-        lbl = st.session_state["select"].replace(" ", "_").lower()
+        lbl = get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
     return lbl
+
 
 def saveImage(image_bytes, label):
     # connect with api to DB
@@ -130,12 +128,12 @@ if file is not None:
     if st.button("Predict"):
         onClickFunction(image)
 
-    if st.session_state["predict"] != "":
+    if get_session_state(SessionStateKey.PREDICT) != "":
         readPrediction()
         getManualSelection()
 
-        if (st.session_state["select"] is not None):
-            st.write("You have selected:", st.session_state["select"])
+        if get_session_state(SessionStateKey.SELECT) is not None:
+            st.write("You have selected:", get_session_state(SessionStateKey.SELECT))
 
         if st.button("Save Image"):
             label = getLabel()
