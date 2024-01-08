@@ -1,7 +1,7 @@
 import streamlit as st
 from PIL import Image
 from io import BytesIO
-from model.models import YoloModel, DensenetModel, EnsembleModel
+from model.models import YoloModel, DensenetModel, EnsembleModel, EnsemblePrediction
 from enum import Enum
 
 
@@ -43,7 +43,6 @@ def reset_session_state():
 def onClickFunction(img):
     result = predictor(img)
     set_session_state(SessionStateKey.PREDICT, result)
-    return result
 
 
 def predictor(img):
@@ -55,14 +54,18 @@ def predictor(img):
     return ensemble.predict(img)
 
 
-def readPrediction():
-    predictions = get_session_state(SessionStateKey.PREDICT)
+def read_prediction():
+    ensemble_prediction: EnsemblePrediction = get_session_state(SessionStateKey.PREDICT)
 
-    preds = "\n".join(pred["prediction"] for pred in predictions)
-    confs = "\n".join("{:0.2f}".format(pred["confidence"]) for pred in predictions)
-
-    st.write('Prediction:', preds)
-    st.write('Confidence:', confs)
+    if ensemble_prediction.unique_result:
+        model_output = ensemble_prediction.result[0]
+        st.write('Prediction:', model_output.prediction)
+        st.write('Confidence:', "{:0.4f}".format(model_output.probability))
+    else:
+        st.write("Different models returned a different result. In descending order")
+        for model_output in ensemble_prediction.result:
+            st.write('Prediction:', model_output.prediction)
+            st.write('Confidence:', model_output.probability)
 
 
 def getManualSelection():
@@ -135,7 +138,7 @@ if file is not None:
         onClickFunction(image)
 
     if get_session_state(SessionStateKey.PREDICT) != "":
-        readPrediction()
+        read_prediction()
         getManualSelection()
 
         if get_session_state(SessionStateKey.SELECT) is not None:
