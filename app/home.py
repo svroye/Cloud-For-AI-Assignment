@@ -28,18 +28,14 @@ def reset_session_state():
         del st.session_state[key]
 
 
-def onClickFunction(img):
-    result = predictor(img)
-    set_session_state(SessionStateKey.PREDICT, result)
-
-
-def predictor(img):
+def predict(img):
     models = [
         YoloModel("./app/model/last.pt"),
         DensenetModel("./app/model/model.pickle")
     ]
     ensemble = EnsembleModel(models)
-    return ensemble.predict(img)
+    result = ensemble.predict(img)
+    set_session_state(SessionStateKey.PREDICT, result)
 
 
 def read_prediction():
@@ -121,8 +117,7 @@ if file is not None:
     image.thumbnail((256, 256))
     st.image(image)
 
-    if st.button("Predict"):
-        onClickFunction(image)
+    st.button("Predict", on_click=predict, args=(image,))
 
     if has_session_state(SessionStateKey.PREDICT):
         read_prediction()
