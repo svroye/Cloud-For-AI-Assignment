@@ -2,15 +2,32 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 from model.models import YoloModel, DensenetModel, EnsembleModel
+from enum import Enum
 
+
+class SessionStateKey(Enum):
+    PREDICT = 'predict'
+    SELECT = 'select'
+
+
+def set_session_state(key: SessionStateKey, value):
+    st.session_state[key.value] = value
+
+
+def get_session_state(key: SessionStateKey):
+    return st.session_state[key.value]
+
+
+def has_session_state(key: SessionStateKey):
+    return key.value in st.session_state
 
 
 def setSessionStates():
-    if "predict" not in st.session_state:
-        st.session_state["predict"] = ""
+    if not has_session_state(SessionStateKey.PREDICT):
+        set_session_state(SessionStateKey.PREDICT, "")
 
-    if "select" not in st.session_state:
-        st.session_state["select"] = None
+    if not has_session_state(SessionStateKey.SELECT):
+        set_session_state(SessionStateKey.SELECT, None)
 
 
 def deleteSessionStates():
