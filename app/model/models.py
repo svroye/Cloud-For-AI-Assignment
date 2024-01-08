@@ -1,3 +1,4 @@
+import logging
 import pickle
 from abc import ABC, abstractmethod
 from typing import List
@@ -49,19 +50,23 @@ class DensenetModel(Model):
         super().__init__(m)
 
     def predict(self, data):
-        model = self.model["model"]
-        model.eval()
+        try:
+            model = self.model["model"]
+            model.eval()
 
-        device = torch.device("cpu")
-        data_tf = self.model["transformation"](data).to(device)
-        data_tf = torch.unsqueeze(data_tf, 0)
+            device = torch.device("cpu")
+            data_tf = self.model["transformation"](data).to(device)
+            data_tf = torch.unsqueeze(data_tf, 0)
 
-        probs = torch.nn.functional.softmax(model(data_tf), dim=1)
-        prediction_idx = torch.argmax(probs, dim=1).item()
-        prediction = self.model["labels"][prediction_idx]
-        probability = probs[0, prediction_idx].item() * 100
+            probs = torch.nn.functional.softmax(model(data_tf), dim=1)
+            prediction_idx = torch.argmax(probs, dim=1).item()
+            prediction = self.model["labels"][prediction_idx]
+            probability = probs[0, prediction_idx].item() * 100
 
-        return ModelPrediction(prediction, probability)
+            return ModelPrediction(prediction, probability)
+        except Exception as e:
+            logging.error("Prediction could not be made. To be investigated. Exception: %s", e)
+            return None
 
 
 class EnsembleModel:
