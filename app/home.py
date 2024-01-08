@@ -35,6 +35,11 @@ def deleteSessionStates():
         del st.session_state[key]
 
 
+def reset_session_state():
+    set_session_state(SessionStateKey.PREDICT, "")
+    set_session_state(SessionStateKey.SELECT, None)
+
+
 def onClickFunction(img):
     result = predictor(img)
     set_session_state(SessionStateKey.PREDICT, result)
@@ -115,7 +120,8 @@ st.write(
     "function to evaluate what kind of sports ball is in the image.")
 st.write("Choose an image to upload to the gallery")
 
-file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed")
+file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed",
+                        on_change=reset_session_state)
 
 if file is not None:
     image_bytes = file.getvalue()
