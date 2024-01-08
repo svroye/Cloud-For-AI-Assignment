@@ -22,7 +22,6 @@ def has_session_state(key: SessionStateKey):
     return key.value in st.session_state
 
 
-
 def reset_session_state():
     for key in st.session_state.keys():
         del st.session_state[key]
@@ -71,6 +70,10 @@ def getLabel():
         return get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
 
 
+def on_image_change():
+    reset_session_state()
+    set_session_state(SessionStateKey.IMAGE_SELECTED, True)
+
 def save_image(image_bytes):
     # label = getLabel()
     # Write image with label to DB
@@ -109,9 +112,9 @@ st.write(
 st.write("Choose an image to upload to the gallery")
 
 file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed",
-                        on_change=reset_session_state)
+                        on_change=on_image_change)
 
-if file is not None:
+if file is not None and has_session_state(SessionStateKey.IMAGE_SELECTED):
     image_bytes = file.getvalue()
     image = Image.open(BytesIO(image_bytes))
     image.thumbnail((256, 256))
