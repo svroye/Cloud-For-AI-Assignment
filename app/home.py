@@ -22,10 +22,6 @@ def has_session_state(key: SessionStateKey):
     return key.value in st.session_state
 
 
-def deleteSessionStates():
-    for key in st.session_state.keys():
-        del st.session_state[key]
-
 
 def reset_session_state():
     for key in st.session_state.keys():
@@ -140,4 +136,4 @@ if file is not None:
             # Write image with label to DB
             # saveImage(image_bytes, label)
 
-            deleteSessionStates()
+            reset_session_state()
