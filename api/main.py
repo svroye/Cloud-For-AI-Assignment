@@ -7,8 +7,6 @@ from fastapi import FastAPI, Request, status, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-import streamlit as st
-
 app = FastAPI()
 model = YOLO('./last.pt')
 
@@ -26,9 +24,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.post("/predict/")
-def results(f: UploadFile):
+def results(file: UploadFile):
     try:
-        data = f.file.read()
+        data = file.file.read()
         image = Image.open(BytesIO(data))
 
         predict = model.predict(image)
@@ -39,10 +37,10 @@ def results(f: UploadFile):
         prediction = names_dict[probs.top1]
         prediction = prediction.replace("_", " ").title()
 
-        confidence = probs.numpy().top1conf * 100
+        confidence = "{:0.2f}%".format(probs.numpy().top1conf * 100)
 
         result = {"prediction": prediction, "confidence": confidence}
-        return JSONResponse(result)
+        return result
     except Exception as e:
         print(e)
     except RequestValidationError as vale:
