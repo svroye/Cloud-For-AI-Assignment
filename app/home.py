@@ -25,7 +25,7 @@ def onClickFunction(img):
 def predictor(img):
     from ultralytics import YOLO
 
-    model = YOLO("./last.pt")
+    model = YOLO("./app/last.pt")
     predict = model.predict(img)
     names_dict = predict[0].names
     probs = predict[0].probs
