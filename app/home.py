@@ -56,7 +56,7 @@ def predictor(img):
 
 def read_prediction():
     ensemble_prediction: EnsemblePrediction = get_session_state(SessionStateKey.PREDICT)
-
+    st.write("Number of models used: ", ensemble_prediction.number_of_models)
     if ensemble_prediction.unique_result:
         model_output = ensemble_prediction.result[0]
         st.write('Prediction:', model_output.prediction)
