@@ -13,8 +13,9 @@ class ModelPrediction:
 
 
 class EnsemblePrediction:
-    def __init__(self, unique_result: bool, result: List[ModelPrediction]):
+    def __init__(self, unique_result: bool, number_of_models: int, result: List[ModelPrediction]):
         self.unique_result = unique_result
+        self.number_of_models = number_of_models
         self.result = result
 
 
@@ -68,15 +69,15 @@ class EnsembleModel:
         self.models = models
 
     def predict(self, data):
-        predictions = [model.predict(data) for model in self.models]
+        predictions = list(filter(lambda x: x is not None, [model.predict(data) for model in self.models]))
 
         # Check if all predicted labels are the same
         if all(pred.prediction == predictions[0].prediction for pred in predictions):
             avg_probability = sum(pred.probability for pred in predictions) / len(predictions)
             output = ModelPrediction(prediction=predictions[0].prediction, probability=avg_probability)
-            return EnsemblePrediction(unique_result=True, result=[output])
+            return EnsemblePrediction(unique_result=True, result=[output], number_of_models=len(predictions))
         else:
             # If labels are different, sort the predictions by decreasing order of probability
             sorted_predictions = sorted(predictions, key=lambda x: x.probability, reverse=True)
-            return EnsemblePrediction(unique_result=False, result=sorted_predictions)
+            return EnsemblePrediction(unique_result=False, result=sorted_predictions, number_of_models=len(predictions))
 
