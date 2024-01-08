@@ -75,10 +75,11 @@ def getLabel():
         return get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
 
 
-def saveImage(image_bytes, label):
-    # connect with api to DB
-    # pass data to DB
-    return None
+def save_image(image_bytes):
+    # label = getLabel()
+    # Write image with label to DB
+    # saveImage(image_bytes, label)
+    reset_session_state()
 
 
 def api_call(file):
@@ -130,10 +131,4 @@ if file is not None:
         if has_session_state(SessionStateKey.SELECT):
             st.write("You have selected:", get_session_state(SessionStateKey.SELECT))
 
-        if st.button("Save Image"):
-            label = getLabel()
-
-            # Write image with label to DB
-            # saveImage(image_bytes, label)
-
-            reset_session_state()
+        st.button("Save Image", on_click=save_image, args=(image_bytes, ))
