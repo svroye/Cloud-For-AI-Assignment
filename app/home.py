@@ -69,10 +69,9 @@ def getManualSelection():
 
 def getLabel():
     if not has_session_state(SessionStateKey.SELECT):
-        lbl = get_session_state(SessionStateKey.PREDICT)
+        return get_session_state(SessionStateKey.PREDICT)
     else:
-        lbl = get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
-    return lbl
+        return get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
 
 
 def saveImage(image_bytes, label):
