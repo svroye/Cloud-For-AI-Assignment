@@ -8,6 +8,7 @@ from enum import Enum
 class SessionStateKey(Enum):
     PREDICT = 'predict'
     SELECT = 'select'
+    IMAGE_SELECTED ='image_selected'
 
 
 def set_session_state(key: SessionStateKey, value):
