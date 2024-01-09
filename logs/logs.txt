@@ -30,5 +30,12 @@ meeting comparing the models
 05/01/2024 - team
 meeting weekly
 
+
 08/01/2024 - team
 meeting finalizing project
+
+09/01/2024 - Wout de Baere
+visualizing model probabilities
+
+09/01/2024 - team
+finalize project and create documentation
