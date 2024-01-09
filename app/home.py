@@ -3,7 +3,8 @@ from PIL import Image
 from io import BytesIO
 from model.models import YoloModel, DensenetModel, EnsembleModel, EnsemblePrediction
 from enum import Enum
-
+import matplotlib.pyplot as plt
+import pandas as pd
 
 class SessionStateKey(Enum):
     PREDICT = 'predict'
@@ -37,19 +38,46 @@ def predict(img):
     result = ensemble.predict(img)
     set_session_state(SessionStateKey.PREDICT, result)
 
+def visualize_prediction(list_df):
+    # Create a grouped bar chart
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))  # 1 row, 2 columns
+    bar_width = 0.35
+    index = range(len(list_df[0]))
+    print(list_df[0])
+    names = ["yolo_model", "densenet_model"]
+    plt.suptitle('Top 5 Categories for yolo_model and densenet_model')
+    for id in range(len(list_df)):
+
+        bars = ax[id].bar(index, list_df[id]['Probability'], bar_width, label=names[id])
+
+        
+        # if top 3 from the 2 models are not the sama --> 2 difrent plots?
+        ax[id].set_xlabel('Category')
+        ax[id].set_ylabel('Probability')
+        ax[id].set_xticks([i + bar_width / 2 for i in index])
+        ax[id].set_xticklabels(list_df[id]['Prediction'], rotation=90)
+        ax[id].legend()
+        # Display exact values on top of the bars in the first subplot
+        for bar in bars:
+            yval = bar.get_height()
+            ax[id].text(bar.get_x() + bar.get_width()/2, yval + 0.1, round(yval, 1), ha='center', va='bottom')
+    # Display the chart in Streamlit
+    st.pyplot(fig)
+
 
 def read_prediction():
     ensemble_prediction: EnsemblePrediction = get_session_state(SessionStateKey.PREDICT)
     st.write("Number of models used: ", ensemble_prediction.number_of_models)
+    list_df = []
+    for model_output in ensemble_prediction.result:
+        list_df.append(pd.DataFrame(model_output.top_results.items(), columns = ["Prediction","Probability"]))
+
+    visualize_prediction(list_df)
     if ensemble_prediction.unique_result:
-        model_output = ensemble_prediction.result[0]
-        st.write('Prediction:', model_output.prediction)
-        st.write('Confidence:', "{:0.4f}".format(model_output.probability))
-    else:
-        st.write("Different models returned a different result. In descending order")
-        for model_output in ensemble_prediction.result:
-            st.write('Prediction:', model_output.prediction)
-            st.write('Confidence:', model_output.probability)
+        avg_probability = sum(pred.probability for pred in ensemble_prediction.result) / len(ensemble_prediction.result)
+        st.write('Prediction:', ensemble_prediction.result[0].prediction)
+        st.write('Confidence:', "{:0.4f}%".format(avg_probability))
+
 
 
 def getManualSelection():

@@ -8,9 +8,10 @@ import torch
 
 
 class ModelPrediction:
-    def __init__(self, prediction, probability):
+    def __init__(self,top_results, prediction, probability):
         self.prediction = prediction
         self.probability = probability
+        self.top_results = top_results
 
 
 class EnsemblePrediction:
@@ -18,6 +19,9 @@ class EnsemblePrediction:
         self.unique_result = unique_result
         self.number_of_models = number_of_models
         self.result = result
+    
+    
+        #toevoegen van probability top 3 of the 2 models
 
 
 class Model(ABC):
@@ -39,8 +43,13 @@ class YoloModel(Model):
         names = predict[0].names
         probs = predict[0].probs
         prediction = names[probs.top1]
+        top_results = {
+        
+        }
+        for idx, prob in zip(probs.top5, probs.top5conf):
+            top_results[names[idx]] = prob.item() * 100
         probability = probs.numpy().top1conf * 100
-        return ModelPrediction(prediction, probability)
+        return ModelPrediction(top_results,prediction, probability)
 
 
 class DensenetModel(Model):
@@ -53,7 +62,7 @@ class DensenetModel(Model):
         try:
             model = self.model["model"]
             model.eval()
-
+            top_results = {}
             device = torch.device("cpu")
             data_tf = self.model["transformation"](data).to(device)
             data_tf = torch.unsqueeze(data_tf, 0)
@@ -62,8 +71,10 @@ class DensenetModel(Model):
             prediction_idx = torch.argmax(probs, dim=1).item()
             prediction = self.model["labels"][prediction_idx]
             probability = probs[0, prediction_idx].item() * 100
-
-            return ModelPrediction(prediction, probability)
+            topk_values, topk_indices = torch.topk(probs, k=5, dim=1)
+            for idx, prob in zip(topk_indices.flatten(), topk_values.flatten()):
+                top_results[self.model["labels"][idx.item()]] = prob.item() * 100
+            return ModelPrediction(top_results, prediction, probability)
         except Exception as e:
             logging.error("Prediction could not be made. To be investigated. Exception: %s", e)
             return None
@@ -77,12 +88,6 @@ class EnsembleModel:
         predictions = list(filter(lambda x: x is not None, [model.predict(data) for model in self.models]))
 
         # Check if all predicted labels are the same
-        if all(pred.prediction == predictions[0].prediction for pred in predictions):
-            avg_probability = sum(pred.probability for pred in predictions) / len(predictions)
-            output = ModelPrediction(prediction=predictions[0].prediction, probability=avg_probability)
-            return EnsemblePrediction(unique_result=True, result=[output], number_of_models=len(predictions))
-        else:
-            # If labels are different, sort the predictions by decreasing order of probability
-            sorted_predictions = sorted(predictions, key=lambda x: x.probability, reverse=True)
-            return EnsemblePrediction(unique_result=False, result=sorted_predictions, number_of_models=len(predictions))
+        unique_result = all(pred.prediction == predictions[0].prediction for pred in predictions)
+        return EnsemblePrediction(unique_result, result=predictions, number_of_models=len(predictions))
 
