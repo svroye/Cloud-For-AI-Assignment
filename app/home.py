@@ -1,44 +1,55 @@
 import streamlit as st
 from PIL import Image
 from io import BytesIO
+from model.models import YoloModel, DensenetModel, EnsembleModel, EnsemblePrediction
+from enum import Enum
 
 
-def setSessionStates():
-    if "predict" not in st.session_state:
-        st.session_state["predict"] = ""
-
-    if "select" not in st.session_state:
-        st.session_state["select"] = None
+class SessionStateKey(Enum):
+    PREDICT = 'predict'
+    SELECT = 'select'
+    IMAGE_SELECTED ='image_selected'
 
 
-def deleteSessionStates():
+def set_session_state(key: SessionStateKey, value):
+    st.session_state[key.value] = value
+
+
+def get_session_state(key: SessionStateKey):
+    return st.session_state[key.value]
+
+
+def has_session_state(key: SessionStateKey):
+    return key.value in st.session_state
+
+
+def reset_session_state():
     for key in st.session_state.keys():
         del st.session_state[key]
 
 
-def onClickFunction(img):
-    result = predictor(img)
-    st.session_state["predict"] = result
-    return result
+def predict(img):
+    models = [
+        YoloModel("./app/model/last.pt"),
+        DensenetModel("./app/model/model.pickle")
+    ]
+    ensemble = EnsembleModel(models)
+    result = ensemble.predict(img)
+    set_session_state(SessionStateKey.PREDICT, result)
 
 
-def predictor(img):
-    from ultralytics import YOLO
-
-    model = YOLO("./last.pt")
-    predict = model.predict(img)
-    names_dict = predict[0].names
-    probs = predict[0].probs
-    prediction = names_dict[probs.top1]
-    prediction = prediction.replace("_", " ").title()
-    confidence = probs.numpy().top1conf * 100
-    result = {"prediction": prediction, "confidence": confidence}
-    return result
-
-
-def readPrediction():
-    st.write('Prediction:', st.session_state["predict"]["prediction"])
-    st.write('Confidence: {:0.2f}%'.format(st.session_state["predict"]["confidence"]))
+def read_prediction():
+    ensemble_prediction: EnsemblePrediction = get_session_state(SessionStateKey.PREDICT)
+    st.write("Number of models used: ", ensemble_prediction.number_of_models)
+    if ensemble_prediction.unique_result:
+        model_output = ensemble_prediction.result[0]
+        st.write('Prediction:', model_output.prediction)
+        st.write('Confidence:', "{:0.4f}".format(model_output.probability))
+    else:
+        st.write("Different models returned a different result. In descending order")
+        for model_output in ensemble_prediction.result:
+            st.write('Prediction:', model_output.prediction)
+            st.write('Confidence:', model_output.probability)
 
 
 def getManualSelection():
@@ -48,21 +59,27 @@ def getManualSelection():
                               "Hockey Ball", "Hockey Puck", "Rugby Ball", "Shuttlecock",
                               "Table Tennis Ball", "Tennis Ball", "Volleyball"], index= None,
                              placeholder="Do not use in case of a correct prediction",)
-    st.session_state.select = selection
-    return st.session_state.select
+    if selection:
+        set_session_state(SessionStateKey.SELECT, selection)
+    return selection
 
 
 def getLabel():
-    if st.session_state["select"] is None:
-        lbl = st.session_state["predict"]
+    if not has_session_state(SessionStateKey.SELECT):
+        return get_session_state(SessionStateKey.PREDICT)
     else:
-        lbl = st.session_state["select"].replace(" ", "_").lower()
-    return lbl
+        return get_session_state(SessionStateKey.SELECT).replace(" ", "_").lower()
 
-def saveImage(image_bytes, label):
-    # connect with api to DB
-    # pass data to DB
-    return None
+
+def on_image_change():
+    reset_session_state()
+    set_session_state(SessionStateKey.IMAGE_SELECTED, True)
+
+def save_image(image_bytes):
+    # label = getLabel()
+    # Write image with label to DB
+    # saveImage(image_bytes, label)
+    reset_session_state()
 
 
 def api_call(file):
@@ -95,30 +112,22 @@ st.write(
     "function to evaluate what kind of sports ball is in the image.")
 st.write("Choose an image to upload to the gallery")
 
-file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed")
+file = st.file_uploader("Upload an image", type=['jpeg', 'jpg', 'png'], label_visibility="collapsed",
+                        on_change=on_image_change)
 
-if file is not None:
+if file is not None and has_session_state(SessionStateKey.IMAGE_SELECTED):
     image_bytes = file.getvalue()
     image = Image.open(BytesIO(image_bytes))
     image.thumbnail((256, 256))
     st.image(image)
 
-    setSessionStates()
+    st.button("Predict", on_click=predict, args=(image,))
 
-    if st.button("Predict"):
-        onClickFunction(image)
-
-    if st.session_state["predict"] != "":
-        readPrediction()
+    if has_session_state(SessionStateKey.PREDICT):
+        read_prediction()
         getManualSelection()
 
-        if (st.session_state["select"] is not None):
-            st.write("You have selected:", st.session_state["select"])
+        if has_session_state(SessionStateKey.SELECT):
+            st.write("You have selected:", get_session_state(SessionStateKey.SELECT))
 
-        if st.button("Save Image"):
-            label = getLabel()
-
-            # Write image with label to DB
-            # saveImage(image_bytes, label)
-
-            deleteSessionStates()
+        st.button("Save Image", on_click=save_image, args=(image_bytes, ))
