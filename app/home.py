@@ -6,10 +6,11 @@ from enum import Enum
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 class SessionStateKey(Enum):
     PREDICT = 'predict'
     SELECT = 'select'
-    IMAGE_SELECTED ='image_selected'
+    IMAGE_SELECTED = 'image_selected'
 
 
 def set_session_state(key: SessionStateKey, value):
@@ -38,6 +39,7 @@ def predict(img):
     result = ensemble.predict(img)
     set_session_state(SessionStateKey.PREDICT, result)
 
+
 def visualize_prediction(list_df):
     # Create a grouped bar chart
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))  # 1 row, 2 columns
@@ -50,8 +52,6 @@ def visualize_prediction(list_df):
 
         bars = ax[id].bar(index, list_df[id]['Probability'], bar_width, label=names[id])
 
-        
-        # if top 3 from the 2 models are not the sama --> 2 difrent plots?
         ax[id].set_xlabel('Category')
         ax[id].set_ylabel('Probability')
         ax[id].set_xticks([i + bar_width / 2 for i in index])
@@ -70,7 +70,7 @@ def read_prediction():
     st.write("Number of models used: ", ensemble_prediction.number_of_models)
     list_df = []
     for model_output in ensemble_prediction.result:
-        list_df.append(pd.DataFrame(model_output.top_results.items(), columns = ["Prediction","Probability"]))
+        list_df.append(pd.DataFrame(model_output.top_results.items(), columns=["Prediction", "Probability"]))
 
     visualize_prediction(list_df)
     if ensemble_prediction.unique_result:
@@ -79,8 +79,7 @@ def read_prediction():
         st.write('Confidence:', "{:0.4f}%".format(avg_probability))
 
 
-
-def getManualSelection():
+def get_manual_selection():
     selection = st.selectbox("If the prediction is incorrect, please pick the correct one",
                              ["American Football", "Baseball", "Basketball", "Billiard Ball",
                               "Bowling Ball", "Cricket Ball", "Football", "Golf Ball",
@@ -92,7 +91,7 @@ def getManualSelection():
     return selection
 
 
-def getLabel():
+def get_label():
     if not has_session_state(SessionStateKey.SELECT):
         return get_session_state(SessionStateKey.PREDICT)
     else:
@@ -102,6 +101,7 @@ def getLabel():
 def on_image_change():
     reset_session_state()
     set_session_state(SessionStateKey.IMAGE_SELECTED, True)
+
 
 def save_image(image_bytes):
     # label = getLabel()
@@ -124,10 +124,10 @@ def api_call(file):
 
 # Sidebar
 st.sidebar.title("The Photographer Company")
-st.sidebar.write("The Photographer Company specializes in capturing images of"
+st.sidebar.write("The Photographer Company specializes in capturing images of "
                  "sports balls used in 15 different sports.")
-st.sidebar.write("Within this application, a photographer can upload their image to the database."
-                 "Before the image gets uploaded, we need to classify the image by giving it a label corresponding"
+st.sidebar.write("Within this application, a photographer can upload their image to the database. "
+                 "Before the image gets uploaded, we need to classify the image by giving it a label corresponding "
                  "to the sports ball that is visible in the image.")
 st.sidebar.write("A prediction of the classification of the image will run automatically with the use of AI.")
 st.sidebar.write("In case of an incorrect prediction, the photographer can manually edit the label before upload.")
@@ -153,7 +153,7 @@ if file is not None and has_session_state(SessionStateKey.IMAGE_SELECTED):
 
     if has_session_state(SessionStateKey.PREDICT):
         read_prediction()
-        getManualSelection()
+        get_manual_selection()
 
         if has_session_state(SessionStateKey.SELECT):
             st.write("You have selected:", get_session_state(SessionStateKey.SELECT))

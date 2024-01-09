@@ -19,9 +19,6 @@ class EnsemblePrediction:
         self.unique_result = unique_result
         self.number_of_models = number_of_models
         self.result = result
-    
-    
-        #toevoegen van probability top 3 of the 2 models
 
 
 class Model(ABC):
