@@ -9,7 +9,7 @@ Add environment export from Conda.
 Add dummy page for Streamlit
 
 18/12/2023 - Wout de Baere
-creating the project proposel
+creating the project proposal (= assignment 1)
 Creating a simple model (localy not in repo)
 
 19/12/2023 - Wout de Baere
@@ -18,24 +18,44 @@ Creating 2nd model using transfer learning (localy)
 20/12/2023 - Wout de Baere
 tested a the model on a streamlit page with a prediction (localy)
 
+22/12/2023 - Gianni Christiaens
+Review project proposal and rewrite in template. (= assignment 1)
+
 23/12/2023 - team
 meeting discussing next to do
+
+27/12/2023 -> 29/12/2023 - Gianni Christiaens
+Search for information for ML models -> result = YOLOv8
+Search for information about YOLOv8.
+Creating notebook to implement YOLOv8 in our sports balls dataset
 
 28/12/2023 - Wout de Baere
 preparing presentation notebook
 
+30/12/2023 - 01/01/2024 - Gianni Christiaens
+Add model to fastapi
+Create streamlit page
+
 02/01/2024 - team
 meeting comparing the models
 
+02/01/2024-05/01/2024 - Gianni Christiaens
+Search for solutions on why validation error as response from FastAPI.
+# Going nuts about that error...
+libgl1 error streamlit cloud, packages.txt not working (solution = has to be in root folder)
+
 05/01/2024 - team
 meeting weekly
-
+result found by validation error as response from FastAPI
 
 08/01/2024 - team
 meeting finalizing project
 
 09/01/2024 - Wout de Baere
 visualizing model probabilities
+
+09/01/2024 - Gianni Christiaens
+Small report on assignment 3
 
 09/01/2024 - team
 finalize project and create documentation
